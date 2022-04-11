@@ -1,7 +1,5 @@
-from weakref import finalize
 import PySimpleGUI as sg
 from mp_query import Query
-from muslce_view import MuscleView
 
 
 def makeMuscleWindow(name, desc):
@@ -21,14 +19,22 @@ def makeWorkouteWindow(name, desc):
 
 result = []
 query = Query()
-# muscle pages
-# musclesOpened = []
-# # workout pages
-# workoutsOpened = []
+equipmentList = []
+
+def toggleEquipment(equip):
+    global equipmentList
+    if equip in equipmentList:
+        equipmentList.remove(equip)
+    elif equip not in equipmentList:
+        equipmentList.append(equip)
+def equipmentText():
+    text = ''
+    for eq in equipmentList:
+        text = text + eq + ' '
+    return text
 
 
-
-result = query.selectEx()
+result = query.selectAllEx()
 print(result)
 
 sg.theme('DarkAmber')   # Add a touch of color
@@ -37,16 +43,18 @@ workoutText = []
 for i in result:
     workoutText.append(sg.Text(i[0]))
 
-
-layout = [ 
-            [sg.Text('Search Muscle'), sg.InputText(key='muscleIn'), sg.Button('Muscle Search')],
-            [sg.Text('Search Workout'), sg.InputText(key='workoutIn'), sg.Button('Workout Search')],
-            [sg.Text('Query for ex_name below:')],
-            workoutText,
-            [sg.Button('Ok'), sg.Button('Cancel')],
-            [sg.Text(size=(12,1), key='muscleOut')],
-            [sg.Text(size=(12,1), key='workoutOut')]
-        ]
+# band, 
+layout = [
+        [sg.Text('Equipment: '), sg.Text(equipmentText(), key='equipText')],
+        [sg.Button('Bodyweight'),sg.Button('Dumbells'),sg.Button('Barbells'),sg.Button('Kettlebells'),sg.Button('Bench'),sg.Button('Cables'),sg.Button('Machines')],
+        [sg.Text('Search Muscle'), sg.InputText(key='muscleIn'), sg.Button('Muscle Search')],
+        [sg.Text('Search Workout'), sg.InputText(key='workoutIn'), sg.Button('Workout Search')],
+        [sg.Text('Query for ex_name below:')],
+        workoutText,
+        [sg.Button('Ok'), sg.Button('Cancel')],
+        [sg.Text(size=(12,1), key='muscleOut')],
+        [sg.Text(size=(12,1), key='workoutOut')]
+    ]
 
 # Create the Window
 window1, muscleWindow, workoutWindow = sg.Window('!! MusclePedia !!', layout, finalize=True), None, None
@@ -64,6 +72,9 @@ while True:
     elif event == 'Ok':
         window1['muscleOut'].update(values['muscleIn'])
         window1['workoutOut'].update(values['workoutIn'])
+    elif event == 'Bodyweight' or event == 'Dumbells' or event == 'Barbells' or event == 'Kettlebells' or event == 'Bench' or event == 'Cables' or event == 'Machines':
+        toggleEquipment(event)
+        window['equipText'].update(equipmentText())
     elif event == 'Muscle Search' and not muscleWindow:
         muscleWindow = makeMuscleWindow(values['muscleIn'], 'This is a description of the bicep muscle. This is a description of the bicep muscle. This is a description of the bicep muscle.')
     elif event == 'Workout Search' and not workoutWindow:

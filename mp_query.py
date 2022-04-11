@@ -8,7 +8,7 @@ class Query:
     self.cursor = self.cnx.cursor()
 
 # Queries to Exercise tables
-  def selectEx(self):
+  def selectAllEx(self):
     result = ''
     query = ("SELECT ex_Name FROM exercises")
     self.cursor.execute(query)
