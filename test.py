@@ -1,39 +1,49 @@
-#!/usr/bin/env python
 import PySimpleGUI as sg
+"""
+    Demo - 2 simultaneous windows using read_all_window
+    Window 1 launches window 2
+    BOTH remain active in parallel
+    Both windows have buttons to launch popups.  The popups are "modal" and thus no other windows will be active
+    Copyright 2020 PySimpleGUI.org
+"""
 
-# Yet another example of TabGroup element
+def make_win1():
+    layout = [[sg.Text('This is the FIRST WINDOW'), sg.Text('      ', k='-OUTPUT-')],
+              [sg.Text('Click Popup anytime to see a modal popup')],
+              [sg.Button('Launch 2nd Window'), sg.Button('Popup'), sg.Button('Exit')]]
+    return sg.Window('Window Title', layout, location=(800,600), finalize=True)
 
-sg.theme('GreenTan')
-tab2_layout = [[sg.Text('This is inside tab 2')],
-               [sg.Text('Tabs can be anywhere now!')]]
 
-tab1_layout = [[sg.Text('Type something here and click button'), sg.Input(key='in')]]
+def make_win2():
+    layout = [[sg.Text('The second window')],
+              [sg.Input(key='-IN-', enable_events=True)],
+              [sg.Text(size=(25,1), k='-OUTPUT-')],
+              [sg.Button('Erase'), sg.Button('Popup'), sg.Button('Exit')]]
+    return sg.Window('Second Window', layout, finalize=True)
 
-tab3_layout = [[sg.Text('This is inside tab 3')]]
-tab4_layout = [[sg.Text('This is inside tab 4')]]
 
-tab_layout = [[sg.Text('This is inside of a tab')]]
-tab_group = sg.TabGroup([[sg.Tab('Tab 7', tab_layout), sg.Tab('Tab 8', tab_layout)]])
 
-tab5_layout = [[sg.Text('Watch this window')],
-                [sg.Output(size=(40,5))]]
-tab6_layout = [[sg.Text('This is inside tab 6')],
-               [sg.Text('How about a second row of stuff in tab 6?'), tab_group]]
+def main():
+    window1, window2 = make_win1(), None        # start off with 1 window open
 
-layout = [[sg.Text('My Window!')], [sg.Frame('A Frame', layout=
-    [[sg.TabGroup([[sg.Tab('Tab 1', tab1_layout), sg.Tab('Tab 2', tab2_layout)]]), sg.TabGroup([[sg.Tab('Tab3', tab3_layout), sg.Tab('Tab 4', tab4_layout)]])]])],
-    [sg.Text('This text is on a row with a column'),sg.Col(layout=[[sg.Text('In a column')],
-    [sg.TabGroup([[sg.Tab('Tab 5', tab5_layout), sg.Tab('Tab 6', tab6_layout)]])],
-          [sg.Button('Click me')]])],]
+    while True:             # Event Loop
+        window, event, values = sg.read_all_windows()
+        if event == sg.WIN_CLOSED or event == 'Exit':
+            window.close()
+            if window == window2:       # if closing win 2, mark as closed
+                window2 = None
+            elif window == window1:     # if closing win 1, exit program
+                break
+        elif event == 'Popup':
+            sg.popup('This is a BLOCKING popup','all windows remain inactive while popup active')
+        elif event == 'Launch 2nd Window' and not window2:
+            window2 = make_win2()
+        elif event == '-IN-':
+            window['-OUTPUT-'].update(f'You enetered {values["-IN-"]}')
+        elif event == 'Erase':
+            window['-OUTPUT-'].update('')
+            window['-IN-'].update('')
+    window.close()
 
-window = sg.Window('My window with tabs', layout, default_element_size=(12,1), finalize=True)
-
-print('Are there enough tabs for you?')
-
-while True:
-    event, values = window.read()
-    print(event, values)
-    if event == sg.WIN_CLOSED:           # always,  always give a way out!
-        break
-
-window.close()
+if __name__ == '__main__':
+    main()
