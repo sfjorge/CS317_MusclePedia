@@ -1,49 +1,27 @@
 import PySimpleGUI as sg
+
 """
-    Demo - 2 simultaneous windows using read_all_window
-    Window 1 launches window 2
-    BOTH remain active in parallel
-    Both windows have buttons to launch popups.  The popups are "modal" and thus no other windows will be active
-    Copyright 2020 PySimpleGUI.org
+    Allows you to "browse" through the Theme settings.  Click on one and you'll see a
+    Popup window using the color scheme you chose.  It's a simple little program that also demonstrates
+    how snappy a GUI can feel if you enable an element's events rather than waiting on a button click.
+    In this program, as soon as a listbox entry is clicked, the read returns.
 """
-
-def make_win1():
-    layout = [[sg.Text('This is the FIRST WINDOW'), sg.Text('      ', k='-OUTPUT-')],
-              [sg.Text('Click Popup anytime to see a modal popup')],
-              [sg.Button('Launch 2nd Window'), sg.Button('Popup'), sg.Button('Exit')]]
-    return sg.Window('Window Title', layout, location=(800,600), finalize=True)
+print(sg.theme_list())
+sg.theme('Dark Brown')
 
 
-def make_win2():
-    layout = [[sg.Text('The second window')],
-              [sg.Input(key='-IN-', enable_events=True)],
-              [sg.Text(size=(25,1), k='-OUTPUT-')],
-              [sg.Button('Erase'), sg.Button('Popup'), sg.Button('Exit')]]
-    return sg.Window('Second Window', layout, finalize=True)
+layout = [[sg.Text('Theme Browser')],
+          [sg.Text('Click a Theme color to see demo window')],
+          [sg.Listbox(values=sg.theme_list(), size=(20, 12), key='-LIST-', enable_events=True)],
+          [sg.Button('Exit')]]
 
+window = sg.Window('Theme Browser', layout)
 
+while True:  # Event Loop
+    event, values = window.read()
+    if event in (sg.WIN_CLOSED, 'Exit'):
+        break
+    sg.theme(values['-LIST-'][0])
+    sg.popup_get_text('This is {}'.format(values['-LIST-'][0]))
 
-def main():
-    window1, window2 = make_win1(), None        # start off with 1 window open
-
-    while True:             # Event Loop
-        window, event, values = sg.read_all_windows()
-        if event == sg.WIN_CLOSED or event == 'Exit':
-            window.close()
-            if window == window2:       # if closing win 2, mark as closed
-                window2 = None
-            elif window == window1:     # if closing win 1, exit program
-                break
-        elif event == 'Popup':
-            sg.popup('This is a BLOCKING popup','all windows remain inactive while popup active')
-        elif event == 'Launch 2nd Window' and not window2:
-            window2 = make_win2()
-        elif event == '-IN-':
-            window['-OUTPUT-'].update(f'You enetered {values["-IN-"]}')
-        elif event == 'Erase':
-            window['-OUTPUT-'].update('')
-            window['-IN-'].update('')
-    window.close()
-
-if __name__ == '__main__':
-    main()
+window.close()
