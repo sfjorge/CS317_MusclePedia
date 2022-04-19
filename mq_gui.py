@@ -9,12 +9,25 @@ def makeMuscleWindow(name, desc):
     ]
     return sg.Window(name, layout, location = (400, 300), finalize=True)
 
-def makeWorkouteWindow(name, desc):
+def makeWorkoutWindow(workout):
+    result = []
+    temp = query.selectExercise(workout)
+    print("raw result of selectExercise: ", temp)
+    for w in temp[0]:
+        result.append(w)
+    print("result: ", result)
+    muscleTargets = []
+    temp = query.muscleTargetsOfExercise(workout)
+    for m in temp:
+        muscleTargets.append(m[0])
+    print("raw result of muscleTargetsOfExercise: ", temp)
     layout = [
-        [sg.Text(name)],
-        [sg.Text(desc)]
+        [sg.Text(result[0])],
+        [sg.Text('Equipment needed: '), sg.Text(result[1])],
+        [sg.Text(result[2])],
+        [sg.Text('Muscles worked out: '), sg.Text(arrToText(muscleTargets))]
     ]
-    return sg.Window(name, layout, location=(800,600), finalize=True)
+    return sg.Window(workout, layout, location=(400,150), finalize=True)
 
 
 result = []
@@ -33,17 +46,12 @@ def toggleMuscle(muscle):
         muscles.remove(muscle)
     elif muscle not in muscles:
         muscles.append(muscle)
-def equipmentText():
-    text = ''
-    for eq in equipmentList:
-        text = text + eq + ' '
-    return text
-def muscleText():
-    text = ''
-    for m in muscles:
-        text = text + m + ' '
-    return text
 
+def arrToText(arr):
+    text = ''
+    for a in arr:
+        text = text + a + ', '
+    return text
 # buttons for selecting individual muscle under muscle group to work out
 # logic of IF statements will be replaced with result of query (input would be muscle group and query for selecting muscles)
 def makeMuscleArray(group): # was makeMuscleButtons
@@ -54,48 +62,46 @@ def makeMuscleArray(group): # was makeMuscleButtons
         muscleList.append(m[0])
     return muscleList
 
-result = query.selectAllEx()
-print(result)
-
 sg.theme('DarkAmber')   # Add a touch of color
 # All the stuff inside your window.
-workoutText = []
-for i in result:
-    workoutText.append(sg.Text(i[0]))
 
 # array for muscle group layout
 muscleGroupButtons = []
 muscleGroups = []
 
 # muscleButtons = []
-muscleList = [sg.Listbox(values = [], size=(30,12), key='muscleSelect', enable_events=True)]
+muscleList = [sg.Listbox(values = [], size=(30,12), key='muscleSelect', enable_events=True, visible = False)]
 muscles = []
 
 # listbox array from muscles
 
 
 # band, 
-layout = [
-        [sg.Text('Search Muscle  '), sg.InputText(key='muscleIn'), sg.Button('Muscle Search'), sg.Text('Search Workout'), sg.InputText(key='workoutIn'), sg.Button('Workout Search')],
-        [sg.Text('Equipment: '), sg.Text(equipmentText(), key='equipText')],
+mainLayout = [
+        [sg.Text('Search Muscle  '), sg.InputText(key='muscleIn'), sg.Button('Muscle Search')],
+        [sg.Text('Search Workout'), sg.InputText(key='workoutIn'), sg.Button('Workout Search')],
+        [sg.Text('Equipment: '), sg.Text(arrToText(equipmentList), key='equipText')],
         [sg.Button('Bodyweight'),sg.Button('Dumbells'),sg.Button('Barbells'),sg.Button('Kettlebells'),sg.Button('Bench'),sg.Button('Cables'),sg.Button('Machines')],
         [sg.Text('Pick a muscle group:')],
         [sg.Button('Arms'),sg.Button('Back'),sg.Button('Chest'),sg.Button('Core'),sg.Button('Legs')],
         muscleList,
-        [sg.Text('Selected muscles: '), sg.Text(muscleText(), key = 'muscleText')],
-        [sg.Text('Query for ex_name below:')],
-        workoutText,
-        [sg.Button('Ok'), sg.Button('Cancel')],
+        [sg.Button('Clear Muscles', visible = False)],
+        [sg.Text('Selected muscles: ', key='txt1', visible=False), sg.Text(arrToText(muscles), key = 'muscleText', visible = False)],
+        [sg.Button('Search', visible=False)],
         [sg.Text(size=(12,1), key='muscleOut')],
         [sg.Text(size=(12,1), key='workoutOut')]
     ]
 
+exerciseLayout = [
+    
+]
+
 # Create the Window
-window1, muscleWindow, workoutWindow = sg.Window('!! MusclePedia !!', layout, finalize=True), None, None
+window1, muscleWindow, workoutWindow = sg.Window('!! MusclePedia !!', mainLayout, finalize=True, location = (500, 100)), None, None
 # Event Loop to process "events" and get the "values" of the inputs
 while True:
     window, event, values = sg.read_all_windows()
-    if event == sg.WIN_CLOSED or event == 'Cancel': # if user closes window or clicks cancel
+    if event == sg.WIN_CLOSED: # if user closes window
         window.close()
         if window == muscleWindow:       # if closing win 2, mark as closed
             muscleWindow = None
@@ -103,23 +109,29 @@ while True:
             workoutWindow = None
         elif window == window1:     # if closing win 1, exit program
             break
-    elif event == 'Ok':
+    elif event == 'Search':
         window1['muscleOut'].update(values['muscleIn'])
         window1['workoutOut'].update(values['workoutIn'])
     elif event == 'Bodyweight' or event == 'Dumbells' or event == 'Barbells' or event == 'Kettlebells' or event == 'Bench' or event == 'Cables' or event == 'Machines':
         toggleEquipment(event)
-        window['equipText'].update(equipmentText())
+        window['equipText'].update(arrToText(equipmentList))
     elif event == 'Muscle Search' and not muscleWindow:
         muscleWindow = makeMuscleWindow(values['muscleIn'], 'This is a description of the bicep muscle. This is a description of the bicep muscle. This is a description of the bicep muscle.')
     elif event == 'Workout Search' and not workoutWindow:
-        workoutWindow = makeMuscleWindow(values['workoutIn'], 'A bicep curl is done with a dumbbell where the arm begins extended with the hand holding the weight with a motion of curling the arm.')
+        workoutWindow = makeWorkoutWindow(values['workoutIn'])
     elif event == 'Arms' or event == 'Back' or event == 'Chest' or event == 'Core' or event == 'Legs': ## replace with groupXxxx
-        window['muscleSelect'].update( makeMuscleArray(event))
-        muscles = []
-        window['muscleText'].update(muscleText())
-    elif values['muscleSelect'][0]:
+        window['muscleSelect'].update( makeMuscleArray(event), visible = True)
+        window['Clear Muscles'].update(visible = True)
+        window['txt1'].update(visible = True)
+        window['muscleText'].update(visible = True)
+        window['Search'].update(visible = True)
+    elif event == 'muscleSelect':
         toggleMuscle(values['muscleSelect'][0])
-        window['muscleText'].update(muscleText())
+        window['muscleText'].update(arrToText(muscles))
+    elif event == 'Clear Muscles':
+        muscles = []
+        window['muscleText'].update(arrToText(muscles))
+
 
 window.close()
 

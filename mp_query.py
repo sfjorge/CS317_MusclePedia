@@ -22,7 +22,19 @@ class Query:
     result = (self.cursor.fetchall())
     return result
 
+  def selectExercise(self, exercise):
+    result = ''
+    query = ("SELECT ex_Name, eq_Name, ex_Description FROM exercises WHERE ex_Name = '"+exercise+"'")
+    self.cursor.execute(query)
+    result = (self.cursor.fetchall())
+    return result
 
+  def muscleTargetsOfExercise(self, exercise):
+    result = ''
+    query = ("SELECT m_Name FROM exercisetargets WHERE ex_Name = '"+exercise+"'")
+    self.cursor.execute(query)
+    result = (self.cursor.fetchall())
+    return result
 
 # App run to disconnect from DB
   def kill(self):
