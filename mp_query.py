@@ -15,6 +15,13 @@ class Query:
     result = (self.cursor.fetchall())
     return result
 
+  def selectMusclesFromGroup(self, group):
+    result = ''
+    query = ("SELECT m_Name FROM muscles WHERE g_Name = '"+group+"'")
+    self.cursor.execute(query)
+    result = (self.cursor.fetchall())
+    return result
+
 
 
 # App run to disconnect from DB

@@ -49,18 +49,9 @@ def muscleText():
 def makeMuscleArray(group): # was makeMuscleButtons
     # muscles = []
     muscleList = []
-    if group == 'Arms':
-        muscleList = ['bicep', 'tricep', 'front delts', 'rear delts', 'upper forearm', 'lower forearm']
-    elif group == 'Back':
-        muscleList = ['lats', 'traps', 'lower back', 'rhomboid']
-    elif group == 'Chest':
-        muscleList = ['upper chest', 'mid chest', 'lower chest']
-    if group == 'Core':
-        muscleList = ['upper abs', 'lower abs', 'obliques']
-    if group == 'Legs':
-        muscleList = ['hip flexors', 'thighs', 'glutes', 'quad', 'thigh', 'calves']
-    # for m in muscleList:
-    #     muscles.append(sg.Button(m))
+    tempArray = query.selectMusclesFromGroup(group)
+    for m in tempArray:
+        muscleList.append(m[0])
     return muscleList
 
 result = query.selectAllEx()
@@ -77,7 +68,7 @@ muscleGroupButtons = []
 muscleGroups = []
 
 # muscleButtons = []
-muscleList = [sg.Listbox(values = [], size=(20,12), key='muscleSelect', enable_events=True)]
+muscleList = [sg.Listbox(values = [], size=(30,12), key='muscleSelect', enable_events=True)]
 muscles = []
 
 # listbox array from muscles
@@ -124,6 +115,8 @@ while True:
         workoutWindow = makeMuscleWindow(values['workoutIn'], 'A bicep curl is done with a dumbbell where the arm begins extended with the hand holding the weight with a motion of curling the arm.')
     elif event == 'Arms' or event == 'Back' or event == 'Chest' or event == 'Core' or event == 'Legs': ## replace with groupXxxx
         window['muscleSelect'].update( makeMuscleArray(event))
+        muscles = []
+        window['muscleText'].update(muscleText())
     elif values['muscleSelect'][0]:
         toggleMuscle(values['muscleSelect'][0])
         window['muscleText'].update(muscleText())
