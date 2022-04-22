@@ -2,6 +2,7 @@
 from matplotlib.colors import cnames
 import mysql.connector
 
+
 class Query:
   def __init__(self):
     self.cnx = mysql.connector.connect(user='root', password='root', database='musclepedia')
@@ -35,6 +36,44 @@ class Query:
     self.cursor.execute(query)
     result = (self.cursor.fetchall())
     return result
+
+  def selectMuscle(self, muscle):
+    result = ''
+    query = "SELECT * FROM muscles WHERE m_Name = '"+muscle+"'"
+    self.cursor.execute(query)
+    result = (self.cursor.fetchall())
+    return result
+
+  def addExerciseWithEquip(self, equipList, muscList):
+    result = ''
+    query = "SELECT * FROM ( SELECT ex_Name FROM exercises WHERE "
+    temp = ""
+    for i, eq in enumerate(equipList):
+      if i==0 and  eq == "Bodyweight":
+        temp +=  ("eq_Name = null")
+      elif i==0:
+        temp += "eq_Name = '" + eq + "'"
+      elif eq == "Bodyweight":
+        temp += (" OR eq_Name = null")
+      else:
+        temp += (" OR eq_Name = '" + eq + "'")
+    query += temp
+    query += ") sub NATURAL JOIN ( SELECT DISTINCT ex_Name FROM exercisetargets t WHERE "
+
+    temp = ""
+    for j, musc in enumerate(muscList):
+      if j == 0:
+        temp += "t.ex_Name IN (SELECT ex_Name FROM exercisetargets WHERE m_Name = '"+musc+"')"
+      else:
+        temp += " OR t.ex_Name IN (SELECT ex_Name FROM exercisetargets WHERE m_Name = '"+musc+"')"
+
+    query += temp
+    query += " ) subTwo;"
+    self.cursor.execute(query)
+    result = (self.cursor.fetchall())
+    return result
+
+
 
 # App run to disconnect from DB
   def kill(self):
