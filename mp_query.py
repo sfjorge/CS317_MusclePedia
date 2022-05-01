@@ -73,7 +73,31 @@ class Query:
     result = (self.cursor.fetchall())
     return result
 
-
+  def addExercise(self, name, equip, desc, muscles):
+      result = ''
+      query = "use Musclepedia; INSERT INTO exercises VALUES ('"
+      if equip == 'Bodyweight':
+        query += (name +"', null, '[Placholder Image]', '"+desc+"'); ")
+      else:
+        query += (name +"', '"+equip+"', '[Placholder Image]', '"+desc+"'); ")
+      query += "INSERT INTO exercisetargets VALUES "
+      for i, m in enumerate(muscles):
+        if i == (len(muscles) - 1):
+          query += ("('"+name+"', '"+m+"');")
+        else:
+          query += ("('"+name+"', '"+m+"'), ")
+      print(query)
+      self.cursor.execute(query)
+      result = (self.cursor.fetchall())
+      return result
+  def deleteExercise(self, name):
+    query = ("DELETE FROM exercises WHERE ex_Name = '"+name+"'; ")
+    query += ("DELETE FROM exercisetargets WHERE ex_Name = '"+name+"';")
+    print(query)
+    self.cursor.execute(query)
+    result = (self.cursor.fetchall())
+    print(result)
+    return result
 
 # App run to disconnect from DB
   def kill(self):

@@ -16,11 +16,15 @@ def makeMuscleWindow(muscle):
     return sg.Window(muscle, layout, location = (400, 200), finalize=True)
 
 def makeWorkoutWindow(workout):
+    print('workout', workout)
     result = []
     temp = query.selectExercise(workout)
     print("raw result of selectExercise: ", temp)
     for w in temp[0]:
-        result.append(w)
+        if w == None:
+            result.append('Bodyweight')
+        else:
+            result.append(w)
     print("result: ", result)
     muscleTargets = []
     temp = query.muscleTargetsOfExercise(workout)
@@ -31,7 +35,9 @@ def makeWorkoutWindow(workout):
         [sg.Text(result[0])],
         [sg.Text('Equipment needed: '), sg.Text(result[1])],
         [sg.Text(result[2])],
-        [sg.Text('Muscles worked out: '), sg.Text(arrToText(muscleTargets))]
+        [sg.Text('Muscles worked out: '), sg.Text(arrToText(muscleTargets))],
+        [sg.Button('DELETE EXERCISE!')],
+        [sg.Text('Exercise Deleted!', visible = False, key='confirm_delete')]
     ]
     return sg.Window(workout, layout, location=(400,150), finalize=True)
 
@@ -42,7 +48,7 @@ def makeAddWindow():
         [sg.Text('Select Equipment:'), sg.Text('', key='equipText_add')],
         [sg.Button('Bodyweight'),sg.Button('Dumbbell'),sg.Button('Barbell'),sg.Button('Kettlebells'),sg.Button('Bench Press'),sg.Button('Cable Machine'),sg.Button('Grip Trainer')],
         [sg.Text('Enter description of exercise:')],
-        [sg.Input(size=(80))],
+        [sg.Input(size=(80), key="ex_desc")],
         [sg.Text('Select muscles targeted by exercise: ')],
         [sg.Button('Arms'),sg.Button('Back'),sg.Button('Chest'),sg.Button('Core'),sg.Button('Legs')],
         muscleList_add,
@@ -52,6 +58,8 @@ def makeAddWindow():
         [sg.Text('EXERCISE ADDED!', visible = False, key = 'confirm_add')]
     ]
     return sg.Window('Add New Exercise', layout, location=(400,200), finalize=True)
+
+inputWorkout = ''
 
 result = []
 query = Query()
@@ -107,6 +115,13 @@ muscles = []
 muscleList_add = [sg.Listbox(values = [], size=(30,12), key='muscleSelect_add', enable_events=True, visible = False)]
 muscles_add = []
 
+searchResults = []
+def toggleSearchResults(res):
+    global searchResults
+    searchResults = []
+    for r in res:
+        searchResults.append(r[0])
+
 # listbox array from muscles
 
 
@@ -123,8 +138,7 @@ mainLayout = [
         [sg.Button('Clear Muscles', visible = False)],
         [sg.Text('Selected muscles: ', key='txt1', visible=False), sg.Text(arrToText(muscles), key = 'muscleText', visible = False)],
         [sg.Button('Search', visible=False)],
-        [sg.Text('', key='muscleOut')],
-        [sg.Text('', key='workoutOut')]
+        [sg.Text('', key='searchResults')]
     ]
 
 exerciseLayout = [
@@ -151,7 +165,8 @@ while True:
             break
     elif event == 'Search':
         res = query.addExerciseWithEquip(equipmentList, muscles)
-        print(res)
+        toggleSearchResults(res)
+        window['searchResults'].update(arrToText(searchResults))
     elif event == 'Bodyweight' or event == 'Dumbbell' or event == 'Barbell' or event == 'Kettlebells' or event == 'Bench Press' or event == 'Cable Machine' or event == 'Grip Trainer':
         if addWindow:
             equipToAdd = event
@@ -163,6 +178,7 @@ while True:
         muscleWindow = makeMuscleWindow(values['muscleIn'])
     elif event == 'Workout Search' and not workoutWindow:
         workoutWindow = makeWorkoutWindow(values['workoutIn'])
+        inputWorkout = values['workoutIn']
     elif event == 'ADD' and not addWindow:
         addWindow = makeAddWindow()
     elif event == 'Arms' or event == 'Back' or event == 'Chest' or event == 'Core' or event == 'Legs': ## replace with groupXxxx
@@ -192,7 +208,12 @@ while True:
         muscles_add = []
         window['muscleText_add'].update(arrToText(muscles_add))
     elif event == 'ADD EXERCISE!':
+        query.addExercise(values['exName'],equipToAdd, values['ex_desc'], muscles_add)
         window['confirm_add'].update(visible = True)
+    elif event == 'DELETE EXERCISE!':
+        query.deleteExercise(inputWorkout)
+        window['confirm_delete'].update(visible=True)
+    print(event)
 
 
 window.close()
